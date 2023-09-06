@@ -1,0 +1,13 @@
+# Data
+pandas
+numpy
+matplotlib
+
+# Media
+moviepy==2.0.0.dev2
+ez_setup
+
+# Models
+tensorflow==2.10.0
+tensorflow_io
+tensorflow-io==0.27.0
