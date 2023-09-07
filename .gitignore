@@ -1,1 +1,8 @@
+# Files
+.python-version
+autoedit/params.py
+
+# Folders
 raw_data/
+notebooks/
+__pycache__/
