@@ -24,6 +24,7 @@ def load_wav_stereo(filename):
     
     return wav
 
+
 def separate_channels(wav_file):
     print(Fore.GREEN + "\nSeparating in two audio channels..." + Style.RESET_ALL)
     wav_c1 = wav_file[:,0]
@@ -35,11 +36,12 @@ def separate_channels(wav_file):
     
     return wav_c1, wav_c2
 
+
 def create_stft_spectrogram(wav_channel_1, wav_channel_2):
     print(Fore.GREEN + "\nCreating a STFT spectrogram..." + Style.RESET_ALL)
     
-    spectrogram_c1 = tf.signal.stft(wav_channel_1, frame_length=320, frame_step=32)
-    spectrogram_c2 = tf.signal.stft(wav_channel_2, frame_length=320, frame_step=32)
+    spectrogram_c1 = tf.signal.stft(wav_channel_1, frame_length=FRAME_LENGTH, frame_step=FRAME_STEP)
+    spectrogram_c2 = tf.signal.stft(wav_channel_2, frame_length=FRAME_LENGTH, frame_step=FRAME_STEP)
     
     spectrogram_c1 = tf.abs(spectrogram_c1)
     spectrogram_c2 = tf.abs(spectrogram_c2)

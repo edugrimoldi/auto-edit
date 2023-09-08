@@ -9,7 +9,7 @@ def preprocess_train(file_path: str,
     print(Fore.BLUE + "\nPreprocessing audio..." + Style.RESET_ALL)
     
     # Decode the audio file
-    wav_total = load_wav_stereo(file_path, rate_out=RATE_OUT)
+    wav_total = load_wav_stereo(file_path)
     
     wav_c1, wav_c2 = separate_channels(wav_total)
 

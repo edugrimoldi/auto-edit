@@ -9,7 +9,7 @@ from autoedit.ml_logic.encoders import load_wav_stereo
 from autoedit.ml_logic.preprocessor import preprocess_train, preprocess_predict
 from autoedit.ml_logic.model import compile_model, initialize_model, train_model
 
-def train(audio: bytes) -> Model:
+def process_data() -> tf.tensor:
     """
     Take a balanced dataset of audios (1 sec. long) in .wav format.
     This method transforms the audio-clips into STFT spectrograms (images) 
@@ -32,23 +32,26 @@ def train(audio: bytes) -> Model:
     data_map = data_map.cache()
     data_map = data_map.shuffle(buffer_size=BUFFER_SIZE)
     data_map = data_map.batch(16)
-    data = data_map.prefetch(8)
+    data_map = data_map.prefetch(8)
+    
+    return data_map
+
+def train(data):
 
     # Create train and test datasets of test_size 0.3
-    train = data_map.take(int(len(data)*0.7))
-    test = data_map.skip(int(len(data)*0.7)).take(int(len(data)*0.3))
+    train = data.take(int(len(data)*0.7))
+    test = data.skip(int(len(data)*0.7)).take(int(len(data)*0.3))
     
     samples, labels = train.as_numpy_iterator().next()
     shape = samples.shape
-
     
     # Train a model on the training set, using `model.py`
     model = initialize_model(input_shape=shape[1:])
     
-    learning_rate = 0.0005 # Check this hyperparam!
+    #learning_rate = 0.0005 # Check this hyperparam!
     patience = 8
     
-    model = compile_model(model, learning_rate=learning_rate)
+    model = compile_model(model)
     model, history = train_model(model, 
                                  train_data=train, 
                                  test_data=test,
@@ -56,20 +59,21 @@ def train(audio: bytes) -> Model:
                                  validation_data=test)
 
     # Compute the validation metric
-    val_precision = np.max(history.history['val_precision'])
+    #val_precision = np.max(history.history['val_precision'])
 
-    print("✅ preprocess_and_train() done")
+    print("✅ Train done")
     
     return model
    
    
-def pred(data_pred: object) -> pd.DataFrame:
+def pred(model: Model) -> pd.DataFrame:
     print(Fore.MAGENTA + "\n ⭐️ Use case: pred" + Style.RESET_ALL)
     
-    if data_pred is None:
+
+    if GAME is None:
        return "I think you should upload a video ;)"
     
-    wav = load_wav_stereo(data_pred)
+    wav = load_wav_stereo(GAME)
     
     # Slice and preprocess the audio.
     audio_slices = tf.keras.utils.timeseries_dataset_from_array(
@@ -94,7 +98,7 @@ def pred(data_pred: object) -> pd.DataFrame:
     shoot_time_df = pd.DataFrame(shoot_time,
                               columns=["pred","sec"])
     
-    shoot_time_df = shoot_time_df[shoot_time_df["pred"]==1]
+    
     
     print(f"✅ Prediction done")
     return shoot_time_df
@@ -102,8 +106,9 @@ def pred(data_pred: object) -> pd.DataFrame:
 
 if __name__ == '__main__':
     try:
-        train()
-        pred()
+        data_preprocessed = process_data()
+        model = train(data_preprocessed)
+        pred(model)
     except:
         import sys
         import traceback
