@@ -5,8 +5,6 @@ import tensorflow_io as tfio
 
 from autoedit.params import *
 
-RATE_OUT = 8000
-
 def load_wav_stereo(filename):
     print(Fore.BLUE + "\nLoading audio..." + Style.RESET_ALL)
          
@@ -22,7 +20,7 @@ def load_wav_stereo(filename):
     # Amplitude of the audio signal
     wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=RATE_OUT)
             
-    print("✅ WAV processed",)
+    print("✅ WAV processed, with shape", wav.shape)
     
     return wav
 
@@ -42,8 +40,8 @@ def separate_channels(wav_file):
 def create_stft_spectrogram(wav_channel_1, wav_channel_2):
     print(Fore.GREEN + "\nCreating a STFT spectrogram..." + Style.RESET_ALL)
     
-    spectrogram_c1 = tf.signal.stft(wav_channel_1, frame_length=320, frame_step=32)
-    spectrogram_c2 = tf.signal.stft(wav_channel_2, frame_length=320, frame_step=32)
+    spectrogram_c1 = tf.signal.stft(wav_channel_1, frame_length=FRAME_LENGTH, frame_step=FRAME_STEP)
+    spectrogram_c2 = tf.signal.stft(wav_channel_2, frame_length=FRAME_LENGTH, frame_step=FRAME_STEP)
     
     spectrogram_c1 = tf.abs(spectrogram_c1)
     spectrogram_c2 = tf.abs(spectrogram_c2)

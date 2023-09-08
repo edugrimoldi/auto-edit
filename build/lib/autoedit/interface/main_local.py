@@ -9,10 +9,7 @@ from autoedit.ml_logic.encoders import load_wav_stereo
 from autoedit.ml_logic.preprocessor import preprocess_train, preprocess_predict
 from autoedit.ml_logic.model import *
 
-RATE_OUT = 8000
-BUFFER_SIZE = 1000
-
-def process_data() -> tf.Tensor:
+def process_data() -> tf.tensor:
     """
     Take a balanced dataset of audios (1 sec. long) in .wav format.
     This method transforms the audio-clips into STFT spectrograms (images) 
@@ -33,7 +30,7 @@ def process_data() -> tf.Tensor:
     # Preprocess the data and create 16 batchs of N samples.
     data_map = data.map(preprocess_train)
     data_map = data_map.cache()
-    data_map = data_map.shuffle(buffer_size=int(BUFFER_SIZE))
+    data_map = data_map.shuffle(buffer_size=BUFFER_SIZE)
     data_map = data_map.batch(16)
     data_map = data_map.prefetch(8)
     
@@ -68,19 +65,16 @@ def train(data):
     save_model(model)
     
    
-def pred(video: bytes = None) -> pd.DataFrame:
+def pred(video: tf.tensor = None) -> pd.DataFrame:
     print(Fore.MAGENTA + "\n ⭐️ Use case: pred" + Style.RESET_ALL)
     
     if video is None:
-        GAME = os.path.join('raw_data', 'Test', 'test5.wav')
-        path = os.path.join(os.getcwd(), GAME)
-        wav = load_wav_stereo(path)
+       wav = load_wav_stereo(GAME)
     
     else:
         wav = load_wav_stereo(video)
     
     # Slice and preprocess the audio.
-    
     audio_slices = tf.keras.utils.timeseries_dataset_from_array(
         wav, 
         wav, 
