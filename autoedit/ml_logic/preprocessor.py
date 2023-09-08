@@ -1,103 +1,36 @@
-import numpy as np
-import pandas as pd
-import math
-
 from colorama import Fore, Style
 
-from sklearn.pipeline import make_pipeline
-from sklearn.compose import ColumnTransformer, make_column_transformer
-from sklearn.preprocessing import OneHotEncoder, FunctionTransformer
+import tensorflow as tf
+from autoedit.ml_logic.encoders import load_wav_stereo, separate_channels, create_stft_spectrogram
+from autoedit.params import *
 
-from autoedit.ml_logic.encoders import transform_time_features, transform_lonlat_features, compute_geohash
+def preprocess_train(file_path: str, 
+                label: int) -> Tuple[tf.signal.stft, int]:
+    print(Fore.BLUE + "\nPreprocessing audio..." + Style.RESET_ALL)
+    
+    # Decode the audio file
+    wav_total = load_wav_stereo(file_path, rate_out=RATE_OUT)
+    
+    wav_c1, wav_c2 = separate_channels(wav_total)
+
+    # Fill with a padding of zeros and concatenate
+    zero_padding_c1 = tf.zeros(RATE_OUT - len(wav_c1), dtype=tf.float32)
+    zero_padding_c2 = tf.zeros(RATE_OUT - len(wav_c2), dtype=tf.float32)
+    wav_c1 = tf.concat([zero_padding_c1, wav_c1],0)
+    wav_c2 = tf.concat([zero_padding_c2, wav_c2],0)
+    
+    # Create a STFT spectrogram for each channel and concatenate
+    spectrogram = create_stft_spectrogram(wav_c1, wav_c2)
+    
+    print("✅ Spectrogram created succesfully")
+    return spectrogram, label
 
 
-def preprocess_features(X: pd.DataFrame) -> np.ndarray:
-    def create_sklearn_preprocessor() -> ColumnTransformer:
-        """
-        Scikit-learn pipeline that transforms a cleaned dataset of shape (_, 7)
-        into a preprocessed one of fixed shape (_, 65).
+def preprocess_predict(sample, index, rate_out=RATE_OUT):
+    print(Fore.BLUE + "\nPreprocessing audio..." + Style.RESET_ALL)
+    
+    sample = tf.squeeze(sample)
+    wav_c1, wav_c2 = separate_channels(sample)
+    spectrogram = create_stft_spectrogram(wav_c1, wav_c2)
 
-        Stateless operation: "fit_transform()" equals "transform()".
-        """
-        # PASSENGER PIPE
-        p_min = 1
-        p_max = 8
-        passenger_pipe = FunctionTransformer(lambda p: (p - p_min) / (p_max - p_min))
-
-        # DISTANCE PIPE
-        dist_min = 0
-        dist_max = 100
-
-        distance_pipe = make_pipeline(
-            FunctionTransformer(transform_lonlat_features),
-            FunctionTransformer(lambda dist: (dist - dist_min) / (dist_max - dist_min))
-        )
-
-        # TIME PIPE
-        timedelta_min = 0
-        timedelta_max = 2090
-
-        time_categories = [
-            np.arange(0, 7, 1),  # days of the week
-            np.arange(1, 13, 1)  # months of the year
-        ]
-
-        time_pipe = make_pipeline(
-            FunctionTransformer(transform_time_features),
-            make_column_transformer(
-                (OneHotEncoder(
-                    categories=time_categories,
-                    sparse_output=False,
-                    handle_unknown="ignore"),
-                 [2,3]),
-                (FunctionTransformer(lambda year: (year - timedelta_min) / (timedelta_max - timedelta_min)),
-                 [4]), # min-max scale the columns 4 ["timedelta"]
-                remainder="passthrough" # keep hour_sin and hour_cos
-            )
-        )
-
-        # GEOHASH PIPE
-        lonlat_features = ["pickup_latitude", "pickup_longitude", "dropoff_latitude", "dropoff_longitude"]
-        
-        most_important_geohash_districts = [
-            "dr5ru", "dr5rs", "dr5rv", "dr72h", "dr72j", "dr5re", "dr5rk",
-            "dr5rz", "dr5ry", "dr5rt", "dr5rg", "dr5x1", "dr5x0", "dr72m",
-            "dr5rm", "dr5rx", "dr5x2", "dr5rw", "dr5rh", "dr5x8"
-        ]
-
-        geohash_categories = [
-            most_important_geohash_districts,  # pickup district list
-            most_important_geohash_districts  # dropoff district list
-        ]
-        
-
-        geohash_pipe = make_pipeline(
-            FunctionTransformer(compute_geohash),
-            OneHotEncoder(
-                categories=geohash_categories,
-                handle_unknown="ignore",
-                sparse_output=False
-            )
-        )  
-
-        # COMBINED PREPROCESSOR
-        final_preprocessor = ColumnTransformer(
-            [
-                ("passenger_scaler", passenger_pipe, ["passenger_count"]),
-                ("time_preproc", time_pipe, ["pickup_datetime"]),
-                ("dist_preproc", distance_pipe, lonlat_features),
-                ("geohash", geohash_pipe, lonlat_features),
-            ],
-            n_jobs=2,
-        )
-        
-        return final_preprocessor
-
-    print(Fore.BLUE + "\nPreprocessing features..." + Style.RESET_ALL)
-
-    preprocessor = create_sklearn_preprocessor()
-    X_processed = preprocessor.fit_transform(X)
-
-    print("✅ X_processed, with shape", X_processed.shape)
-
-    return X_processed
+    return spectrogram

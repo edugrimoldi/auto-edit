@@ -1,75 +1,51 @@
-import math
-import numpy as np
-import pandas as pd
-import pygeohash as gh
+from colorama import Fore, Style
 
+import tensorflow as tf
+import tensorflow_io as tfio
 
-def transform_time_features(X: pd.DataFrame) -> np.ndarray:
-    assert isinstance(X, pd.DataFrame)
+from autoedit.params import *
+
+def load_wav_stereo(filename):
+    print(Fore.BLUE + "\nLoading audio..." + Style.RESET_ALL)
+         
+    # Load encoded wav file
+    file_contents = tf.io.read_file(filename)
     
-    timedelta = (X["pickup_datetime"] - pd.Timestamp('2009-01-01T00:00:00', tz='UTC'))/pd.Timedelta(1,'D')
+    # Decode wav (tensors by channels) 
+    wav, sample_rate = tf.audio.decode_wav(file_contents)
     
-    pickup_dt = X["pickup_datetime"].dt.tz_convert("America/New_York").dt
-    dow = pickup_dt.weekday
-    hour = pickup_dt.hour
-    month = pickup_dt.month
-
-    hour_sin = np.sin(2 * math.pi / 24 * hour)
-    hour_cos = np.cos(2 * math.pi / 24 * hour)
+    # Removes trailing axis
+    sample_rate = tf.cast(sample_rate, dtype=tf.int64)
     
-    return np.stack([hour_sin, hour_cos, dow, month, timedelta], axis=1)
-
-
-def transform_lonlat_features(X: pd.DataFrame) -> pd.DataFrame:
-    assert isinstance(X, pd.DataFrame)
-    lonlat_features = ["pickup_latitude", "pickup_longitude", "dropoff_latitude", "dropoff_longitude"]
+    # Amplitude of the audio signal
+    wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=RATE_OUT)
+            
+    print("✅ WAV processed, with shape", wav.shape)
     
-    def distances_vectorized(df: pd.DataFrame, start_lat: str, start_lon: str, end_lat: str, end_lon: str) -> dict:
-        """
-        Calculate the haversine and Manhattan distances between two points (specified in decimal degrees).
-        Vectorized version for pandas df
-        Computes distance in Km
-        """       
-        earth_radius = 6371
+    return wav
 
-        lat_1_rad, lon_1_rad = np.radians(df[start_lat]), np.radians(df[start_lon])
-        lat_2_rad, lon_2_rad = np.radians(df[end_lat]), np.radians(df[end_lon])
-
-        dlon_rad = lon_2_rad - lon_1_rad
-        dlat_rad = lat_2_rad - lat_1_rad
-
-        manhattan_rad = np.abs(dlon_rad) + np.abs(dlat_rad)
-        manhattan_km = manhattan_rad * earth_radius
-
-        a = (np.sin(dlat_rad / 2.0)**2 + np.cos(lat_1_rad) * np.cos(lat_2_rad) * np.sin(dlon_rad / 2.0)**2)
-        haversine_rad = 2 * np.arcsin(np.sqrt(a))
-        haversine_km = haversine_rad * earth_radius
-
-        return dict(
-            haversine = haversine_km,
-            manhattan = manhattan_km
-        )
+def separate_channels(wav_file):
+    print(Fore.GREEN + "\nSeparating in two audio channels..." + Style.RESET_ALL)
+    wav_c1 = wav_file[:,0]
+    wav_c2 = wav_file[:,1]
     
-    res = distances_vectorized(X, *lonlat_features)
-
-    return pd.DataFrame(res)
+    # 
+    wav_c1 = wav_c1[:RATE_OUT]
+    wav_c2 = wav_c2[:RATE_OUT]
     
+    return wav_c1, wav_c2
 
-def compute_geohash(X: pd.DataFrame, precision: int = 5) -> np.ndarray:
-    """
-    Add a geohash (ex: "dr5rx") of len "precision" = 5 by default
-    corresponding to each (lon, lat) tuple, for pick-up, and drop-off
-    """
-    assert isinstance(X, pd.DataFrame)
-
-    X["geohash_pickup"] = X.apply(lambda x: gh.encode(x.pickup_latitude, 
-                                                      x.pickup_longitude, 
-                                                      precision=precision),
-                                    axis=1)
+def create_stft_spectrogram(wav_channel_1, wav_channel_2):
+    print(Fore.GREEN + "\nCreating a STFT spectrogram..." + Style.RESET_ALL)
     
-    X["geohash_dropoff"] = X.apply(lambda x: gh.encode(x.dropoff_latitude, 
-                                                       x.dropoff_longitude, 
-                                                       precision=precision),
-                                    axis=1)
-
-    return X[["geohash_pickup", "geohash_dropoff"]]
+    spectrogram_c1 = tf.signal.stft(wav_channel_1, frame_length=320, frame_step=32)
+    spectrogram_c2 = tf.signal.stft(wav_channel_2, frame_length=320, frame_step=32)
+    
+    spectrogram_c1 = tf.abs(spectrogram_c1)
+    spectrogram_c2 = tf.abs(spectrogram_c2)
+    
+    spectrogram_c1 = tf.expand_dims(spectrogram_c1, axis=-1)
+    spectrogram_c2 = tf.expand_dims(spectrogram_c2, axis=-1)
+    spectrogram = tf.concat([spectrogram_c1,spectrogram_c2],axis=-1)
+    
+    return spectrogram

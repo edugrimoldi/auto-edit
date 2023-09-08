@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import time
 
 from colorama import Fore, Style
@@ -8,60 +9,62 @@ from typing import Tuple
 print(Fore.BLUE + "\nLoading TensorFlow..." + Style.RESET_ALL)
 start = time.perf_counter()
 
+import tensorflow as tf
 from tensorflow import keras
-from keras import Model, Sequential, layers, regularizers, optimizers
+from keras import Model
+from keras.models import Sequential
+from keras.layers import Conv2D, Dense, Flatten, MaxPooling2D, Dropout
 from keras.callbacks import EarlyStopping
 
 end = time.perf_counter()
 print(f"\n✅ TensorFlow loaded ({round(end - start, 2)}s)")
 
 
-
 def initialize_model(input_shape: tuple) -> Model:
     """
     Initialize the Neural Network with random weights
     """
-    reg = regularizers.l1_l2(l1=0.005)
-
     model = Sequential()
-    model.add(layers.Input(shape=input_shape))
-    model.add(layers.Dense(100, activation="relu", kernel_regularizer=reg))
-    model.add(layers.BatchNormalization(momentum=0.9))
-    model.add(layers.Dropout(rate=0.1))
-    model.add(layers.Dense(50, activation="relu"))
-    model.add(layers.BatchNormalization(momentum=0.9))  # use momentum=0 to only use statistic of the last seen minibatch in inference mode ("short memory"). Use 1 to average statistics of all seen batch during training histories.
-    model.add(layers.Dropout(rate=0.1))
-    model.add(layers.Dense(1, activation="linear"))
+    model.add(Conv2D(32, (3, 3), activation='relu', input_shape=input_shape))
+    model.add(MaxPooling2D((2, 2)))
+    model.add(Dropout(0.2))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(MaxPooling2D((2, 2)))
+    model.add(Dropout(0.2))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(Flatten())
+    model.add(Dense(64, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(32, activation='relu'))
+    model.add(Dense(1, activation='sigmoid'))
 
     print("✅ Model initialized")
 
     return model
 
 
-def compile_model(model: Model, learning_rate=0.0005) -> Model:
+def compile_model(model: Model, learning_rate: float) -> Model:
     """
-    Compile the Neural Network
-    """
+    Compile the Convolutional Neural Network
+    """    
     optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
     
     model.compile(
-        loss="mean_squared_error", 
+        loss='BinaryCrossentropy', 
         optimizer=optimizer, 
-        metrics=["mae"]
+        metrics=[tf.keras.metrics.Recall(),tf.keras.metrics.Precision()]
     )
 
     print("✅ Model compiled")
 
     return model
 
+
 def train_model(
         model: Model,
-        X: np.ndarray,
-        y: np.ndarray,
-        batch_size=256,
-        patience=2,
-        validation_data=None, # overrides validation_split
-        validation_split=0.3
+        train_data: tf.tensor,
+        test_data: tf.tensor,
+        patience=8,
     ) -> Tuple[Model, dict]:
     """
     Fit the model and return a tuple (fitted_model, history)
@@ -76,17 +79,21 @@ def train_model(
     )
     
     history = model.fit(
-        X,
-        y,
-        validation_data=(validation_data),
-        validation_split=validation_split,
-        epochs=100,
-        batch_size=batch_size,
-        callbacks=[es],
-        verbose=1
-    )
+                    train_data, 
+                    epochs=30, 
+                    validation_data=test_data,
+                    callbacks=[es])
 
-    print(f"✅ Model trained on {len(X)} rows with min val MAE: {round(np.min(history.history['val_mae']), 2)}")
+    print(f"✅ Model trained with precision: {round(np.max(history.history['val_precision']), 2)}")
 
     return model, history
+
+def pred_model(
+    model: Model,
+    pred_data: tf.tensor) -> pd.DataFrame:
+    
+    y_pred = model.predict(pred_data)
+    
+    return y_pred
+    
 
