@@ -1,13 +1,34 @@
-# Data
-pandas
-numpy
+wheel
+nbresult
+colorama
+ipdb
+#wheel
+ipykernel
+colorama
+#yapf
 matplotlib
-
-# Media
+numpy==1.23.5
+pandas==1.5.3
+scipy==1.10.0
+scikit-learn==1.2.1
+pyarrow
 moviepy==2.0.0.dev2
 ez_setup
 
-# Models
+# Google cloud
+#google-cloud-bigquery
+#google-cloud-storage
+
+# Tensorflow 
 tensorflow==2.10.0
-tensorflow_io
 tensorflow-io==0.27.0
+tensorflow_io
+tensorflow-gpu
+
+# API
+fastapi         # API framework
+uvicorn         # web server
+
+# tests
+httpx           # HTTP client
+

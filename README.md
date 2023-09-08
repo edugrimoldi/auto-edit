@@ -1,7 +1,7 @@
 <!-- PROJECT INTRO -->
 <br />
 <div align="center">
-  <h3 align="center">Video Auto Edit - Backend</h3>
+  <h3 align="center">Video Auto Edit - API</h3>
 </div>
 
 <!-- TABLE OF CONTENTS -->
@@ -36,8 +36,8 @@ To get a local copy up and running follow these simple example steps.
 
 First, create a virtual environment and activate it with the following command. 
   ```sh
-  pyenv virtualenv vae-backend
-  pyenv local vae-backend
+  pyenv virtualenv video-auto-edit
+  pyenv local video-auto-edit
   ```
 And check if you have an updated pip version.
 

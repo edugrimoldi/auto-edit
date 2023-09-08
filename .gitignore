@@ -1,3 +1,11 @@
-raw_data/
+.env
+.envrc
 
+# Files
 .python-version
+
+# Folders
+raw_data/
+notebooks/
+__pycache__/
+
