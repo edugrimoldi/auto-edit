@@ -90,7 +90,7 @@ def train_model(
 
 def pred_model(
     model: Model,
-    pred_data: tf.tensor) -> pd.DataFrame:
+    pred_data: tf.tensor) -> tf.tensor:
     
     y_pred = model.predict(pred_data)
     
