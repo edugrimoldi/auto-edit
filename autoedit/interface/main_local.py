@@ -64,8 +64,54 @@ def train(data):
     print("✅ Train done")
 
     save_model(model)
+    
+def postprocess(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Process the video after prediction and save a csv file with markers
+    """
+    clip_list = {}
+    set_start = 0
+    set_end = 0
+    counter = 0
 
+    for index, row in df.iterrows():
+        if row['pred'] > 0:
+            if set_start == 0:
+                set_start = index
+                counter = 0
+            else:
+                set_end = index
+                counter = 0
+        else:
+            if counter == 0:
+                counter += 1
+            elif counter <= STEP_SIZE and index < len(df) - 1:
+                counter += 1
+            else:
+                counter = 0
+                if set_start != 0:
+                    shot_count = df['pred'][set_start:set_end + 1].sum()
+                    if shot_count >= SHOTS_WANTED or index == (len(df)-1):
+                        clip_list[set_start] = set_end
+                    set_start = 0
+                    set_end = 0
 
+    if set_start != 0 and set_end != 0:
+        clip_list[set_start] = set_end
+
+    out_data = pd.DataFrame()
+    out_data['In'] = list(clip_list.keys())
+    out_data['Out'] = list(clip_list.values())
+
+    out_data['In']=out_data['In'].map(lambda x: str(datetime.timedelta(seconds=x)))
+    out_data['Out']=out_data['Out'].map(lambda x: str(datetime.timedelta(seconds=x)))
+    out_data.set_index('In', inplace=True)
+    #out_data.to_csv('file.csv', header=None)
+
+    print(f"✅ Dataframe processed")
+    return out_data
+
+    
 def pred(video: bytes = None) -> pd.DataFrame:
     print(Fore.MAGENTA + "\n ⭐️ Use case: pred" + Style.RESET_ALL)
 
@@ -102,48 +148,9 @@ def pred(video: bytes = None) -> pd.DataFrame:
     shoot_time_df = pd.DataFrame(shoot_time,
                                  columns=["pred","sec"])
 
-    clip_list = {}
-    set_start = 0
-    set_end = 0
-    counter = 0
-    shots_wanted = 2
-    step_size = 3
-
-    for index, row in shoot_time_df.iterrows():
-        if row['pred'] > 0:
-            if set_start == 0:
-                set_start = index
-                counter = 0
-            else:
-                set_end = index
-                counter = 0
-        else:
-            if counter == 0:
-                counter += 1
-            elif counter <= step_size and index < len(shoot_time_df) - 1:
-                counter += 1
-            else:
-                counter = 0
-                if set_start != 0:
-                    shot_count = shoot_time_df['pred'][set_start:set_end + 1].sum()
-                    if shot_count >= shots_wanted or index == (len(shoot_time_df)-1):
-                        clip_list[set_start] = set_end
-                    set_start = 0
-                    set_end = 0
-
-    if set_start != 0 and set_end != 0:
-        clip_list[set_start] = set_end
-
-    out_data = pd.DataFrame()
-    out_data['In'] = list(clip_list.keys())
-    out_data['Out'] = list(clip_list.values())
-
-    out_data['In']=out_data['In'].map(lambda x: str(datetime.timedelta(seconds=x)))
-    out_data['Out']=out_data['Out'].map(lambda x: str(datetime.timedelta(seconds=x)))
-    out_data.set_index('In', inplace=True)
-    out_data.to_csv('file.csv', header=None)
-
-    print(f"✅ File saved")
+    new_data = postprocess(shoot_time_df)
+    
+    return new_data
 
 
 if __name__ == '__main__':
