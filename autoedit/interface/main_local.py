@@ -9,9 +9,6 @@ from autoedit.ml_logic.encoders import load_wav_stereo
 from autoedit.ml_logic.preprocessor import preprocess_train, preprocess_predict
 from autoedit.ml_logic.model import *
 
-RATE_OUT = 8000
-BUFFER_SIZE = 1000
-
 def process_data() -> tf.Tensor:
     """
     Take a balanced dataset of audios (1 sec. long) in .wav format.
@@ -79,21 +76,22 @@ def pred(video: bytes = None) -> pd.DataFrame:
     else:
         wav = load_wav_stereo(video)
     
+    print(type(wav))
     # Slice and preprocess the audio.
+    sample_slices = tf.keras.utils.timeseries_dataset_from_array(wav, 
+                                                                 wav, 
+                                                                 sequence_length=8000,         sequence_stride=8000, 
+                                                                 batch_size=1)
     
-    audio_slices = tf.keras.utils.timeseries_dataset_from_array(
-        wav, 
-        wav, 
-        sequence_length=RATE_OUT, 
-        sequence_stride=RATE_OUT, 
-        batch_size=1)
-    audio_slices = audio_slices.map(preprocess_predict)
-    audio_slices = audio_slices.batch(64)
+    sample_squeezed = tf.squeeze(sample_slices)
+    
+    sample_squeezed = sample_slices.map(preprocess_predict)
+    sample_squeezed = sample_squeezed.batch(64)
 
     # Load saved model
     model = load_model()
     
-    yhat = pred_model(model, audio_slices)
+    yhat = pred_model(model, sample_squeezed)
     yhat = [1 if prediction > 0.5 else 0 for prediction in yhat]
     
     shoot_time = np.array((yhat, list(range(0, len(yhat)))))

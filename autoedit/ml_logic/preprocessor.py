@@ -5,7 +5,6 @@ import tensorflow as tf
 from autoedit.ml_logic.encoders import load_wav_stereo, separate_channels, create_stft_spectrogram
 from autoedit.params import *
 
-RATE_OUT = 8000
 
 def preprocess_train(file_path: str, 
                 label: int) -> Tuple[tf.signal.stft, int]:
@@ -31,9 +30,7 @@ def preprocess_train(file_path: str,
 
 def preprocess_predict(sample):
     print(Fore.BLUE + "\nPreprocessing audio..." + Style.RESET_ALL)
-    
-    sample = tf.squeeze(sample)
-    
+        
     wav_c1, wav_c2 = separate_channels(sample)
     spectrogram = create_stft_spectrogram(wav_c1, wav_c2)
 

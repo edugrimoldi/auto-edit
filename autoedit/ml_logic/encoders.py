@@ -5,7 +5,6 @@ import tensorflow_io as tfio
 
 from autoedit.params import *
 
-RATE_OUT = 8000
 
 def load_wav_stereo(filename):
     print(Fore.BLUE + "\nLoading audio..." + Style.RESET_ALL)
