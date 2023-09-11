@@ -20,9 +20,7 @@ app.add_middleware(
 
 # http://127.0.0.1:8000/predict?video=video_number.mp4
 @app.get("/predict")
-def predict(
-        video: bytes
-    ):      
+def predict(video):      
     """
     Make a single course prediction.
     """
