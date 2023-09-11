@@ -1,7 +1,7 @@
 <!-- PROJECT INTRO -->
 <br />
 <div align="center">
-  <h3 align="center">Video Auto Edit - API</h3>
+  <h3 align="center">Video Auto Edit - API - v1.0.0</h3>
 </div>
 
 <!-- TABLE OF CONTENTS -->
@@ -30,7 +30,7 @@ To - do
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To get a local copy up and running follow these simple example steps.
+To get a local copy up and running, follow these steps.
 
 ### Prerequisites
 
