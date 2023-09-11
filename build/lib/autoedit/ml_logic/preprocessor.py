@@ -1,10 +1,8 @@
 from colorama import Fore, Style
-from typing import Tuple
 
 import tensorflow as tf
 from autoedit.ml_logic.encoders import load_wav_stereo, separate_channels, create_stft_spectrogram
 from autoedit.params import *
-
 
 def preprocess_train(file_path: str, 
                 label: int) -> Tuple[tf.signal.stft, int]:
@@ -28,9 +26,10 @@ def preprocess_train(file_path: str,
     return spectrogram, label
 
 
-def preprocess_predict(sample):
+def preprocess_predict(sample, index, rate_out=RATE_OUT):
     print(Fore.BLUE + "\nPreprocessing audio..." + Style.RESET_ALL)
-        
+    
+    sample = tf.squeeze(sample)
     wav_c1, wav_c2 = separate_channels(sample)
     spectrogram = create_stft_spectrogram(wav_c1, wav_c2)
 

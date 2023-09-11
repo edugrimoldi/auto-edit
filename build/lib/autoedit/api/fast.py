@@ -21,16 +21,26 @@ app.add_middleware(
 # http://127.0.0.1:8000/predict?video=video_number.mp4
 @app.get("/predict")
 def predict(
-        video: bytes
+        video: object     # take an object
     ):      
     """
     Make a single course prediction.
     """
-    markers_df = pred(video)
+    data = pred()
     
-    markers_df = markers_df.to_json()
-      
-    return {'markers': markers_df}
+    
+    X = pd.DataFrame(data, index=[0])
+    
+    model = load_model()
+    assert model is not None
+
+    X_processed = preprocess_predict(X)
+    y_pred = app.state.model.predict(X_processed)
+    
+    new_data = pd.DataFrame(y_pred, 
+                            columns=["Sec", "Number_of_shoots"])
+    
+    return {new_data}  
 
 
 @app.get("/")

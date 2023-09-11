@@ -8,4 +8,5 @@
 raw_data/
 notebooks/
 __pycache__/
-
+autoedit.egg-info/
+build/
