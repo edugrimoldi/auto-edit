@@ -1,4 +1,6 @@
+.gitignore
 README.md
+requirements.txt
 setup.py
 autoedit/__init__.py
 autoedit/params.py
