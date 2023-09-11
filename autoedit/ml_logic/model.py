@@ -49,12 +49,12 @@ def initialize_model(input_shape: tuple) -> Model:
 def compile_model(model: Model, learning_rate: float) -> Model:
     """
     Compile the Convolutional Neural Network
-    """    
+    """
     optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
-    
+
     model.compile(
-        loss='BinaryCrossentropy', 
-        optimizer=optimizer, 
+        loss='BinaryCrossentropy',
+        optimizer=optimizer,
         metrics=[tf.keras.metrics.Recall(),tf.keras.metrics.Precision()]
     )
 
@@ -80,10 +80,10 @@ def train_model(
         restore_best_weights=True,
         verbose=1
     )
-    
+
     history = model.fit(
-                    train_data, 
-                    epochs=30, 
+                    train_data,
+                    epochs=30,
                     validation_data=test_data,
                     callbacks=[es])
 
@@ -98,8 +98,8 @@ def pred_model(model: Model, pred_data: tf.Tensor) -> tf.Tensor:
     """
     y_pred = model.predict(pred_data)
     return y_pred
-    
-    
+
+
 def save_model(model: keras.Model = None) -> None:
     """
     Persist trained model locally on the hard drive at f"{LOCAL_REGISTRY_PATH}/models/{MODEL_NAME}.h5"
@@ -107,7 +107,7 @@ def save_model(model: keras.Model = None) -> None:
     #timestamp = time.strftime("%Y%m%d-%H%M%S")
 
     # Save model locally
-    model_path = os.path.join(LOCAL_REGISTRY_PATH, "models", f"{MODEL_NAME}.h5")
+    model_path = os.path.join(LOCAL_REGISTRY_PATH, f"{MODEL_NAME}.h5")
     model.save(model_path)
 
     print("✅ Model saved locally")
@@ -120,7 +120,7 @@ def load_model() -> keras.Model:
     print(Fore.BLUE + f"\nLoading latest model..." + Style.RESET_ALL)
 
     # Get the latest model version name by the timestamp on disk
-    local_model_directory = os.path.join(LOCAL_REGISTRY_PATH, "models")
+    local_model_directory = os.path.join(LOCAL_REGISTRY_PATH)
     local_model_paths = glob.glob(f"{local_model_directory}/*")
 
     if not local_model_paths:
