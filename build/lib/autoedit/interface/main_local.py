@@ -9,7 +9,7 @@ from autoedit.ml_logic.encoders import load_wav_stereo
 from autoedit.ml_logic.preprocessor import preprocess_train, preprocess_predict
 from autoedit.ml_logic.model import *
 
-def process_data() -> tf.Tensor:
+def process_data() -> tf.tensor:
     """
     Take a balanced dataset of audios (1 sec. long) in .wav format.
     This method transforms the audio-clips into STFT spectrograms (images) 
@@ -30,7 +30,7 @@ def process_data() -> tf.Tensor:
     # Preprocess the data and create 16 batchs of N samples.
     data_map = data.map(preprocess_train)
     data_map = data_map.cache()
-    data_map = data_map.shuffle(buffer_size=int(BUFFER_SIZE))
+    data_map = data_map.shuffle(buffer_size=BUFFER_SIZE)
     data_map = data_map.batch(16)
     data_map = data_map.prefetch(8)
     
@@ -65,33 +65,29 @@ def train(data):
     save_model(model)
     
    
-def pred(video: bytes = None) -> pd.DataFrame:
+def pred(video: tf.tensor = None) -> pd.DataFrame:
     print(Fore.MAGENTA + "\n ⭐️ Use case: pred" + Style.RESET_ALL)
     
     if video is None:
-        GAME = os.path.join('raw_data', 'Test', 'test5.wav')
-        path = os.path.join(os.getcwd(), GAME)
-        wav = load_wav_stereo(path)
+       wav = load_wav_stereo(GAME)
     
     else:
         wav = load_wav_stereo(video)
     
-    print(type(wav))
     # Slice and preprocess the audio.
-    sample_slices = tf.keras.utils.timeseries_dataset_from_array(wav, 
-                                                                 wav, 
-                                                                 sequence_length=8000,         sequence_stride=8000, 
-                                                                 batch_size=1)
-    
-    sample_squeezed = tf.squeeze(sample_slices)
-    
-    sample_squeezed = sample_slices.map(preprocess_predict)
-    sample_squeezed = sample_squeezed.batch(64)
+    audio_slices = tf.keras.utils.timeseries_dataset_from_array(
+        wav, 
+        wav, 
+        sequence_length=RATE_OUT, 
+        sequence_stride=RATE_OUT, 
+        batch_size=1)
+    audio_slices = audio_slices.map(preprocess_predict)
+    audio_slices = audio_slices.batch(64)
 
     # Load saved model
     model = load_model()
     
-    yhat = pred_model(model, sample_squeezed)
+    yhat = pred_model(model, audio_slices)
     yhat = [1 if prediction > 0.5 else 0 for prediction in yhat]
     
     shoot_time = np.array((yhat, list(range(0, len(yhat)))))

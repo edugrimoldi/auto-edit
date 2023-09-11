@@ -5,8 +5,8 @@ with open("requirements.txt") as f:
     content = f.readlines()
 requirements = [x.strip() for x in content if "git+" not in x]
 
-setup(name='auto-edit',
-      version="0.0.1",
+setup(name='autoedit',
+      #version="0.0.1",
       description="Video Auto-Edit Model (train locally)",
       license="MIT",
       author="Gameplay VAE team",

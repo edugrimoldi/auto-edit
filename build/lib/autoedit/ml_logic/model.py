@@ -65,8 +65,8 @@ def compile_model(model: Model, learning_rate: float) -> Model:
 
 def train_model(
         model: Model,
-        train_data: tf.Tensor,
-        test_data: tf.Tensor,
+        train_data: tf.tensor,
+        test_data: tf.tensor,
         patience=8,
     ) -> Tuple[Model, dict]:
     """
@@ -92,9 +92,9 @@ def train_model(
     return model, history
 
 
-def pred_model(model: Model, pred_data: tf.Tensor) -> tf.Tensor:
+def pred_model(model: Model, pred_data: tf.tensor) -> tf.tensor:
     """
-    Perform a prediction and return a tf.Tensor
+    Perform a prediction and return a tf.tensor
     """
     y_pred = model.predict(pred_data)
     return y_pred
