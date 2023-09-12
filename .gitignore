@@ -10,3 +10,4 @@ notebooks/
 __pycache__/
 autoedit.egg-info/
 build/
+models/
