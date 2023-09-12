@@ -64,7 +64,8 @@ def train(data):
     print("✅ Train done")
 
     save_model(model)
-    
+
+
 def postprocess(df: pd.DataFrame) -> pd.DataFrame:
     """
     Process the video after prediction and save a csv file with markers
@@ -73,6 +74,8 @@ def postprocess(df: pd.DataFrame) -> pd.DataFrame:
     set_start = 0
     set_end = 0
     counter = 0
+    shots_wanted = SHOTS_WANTED
+    step_size = STEP_SIZE
 
     for index, row in df.iterrows():
         if row['pred'] > 0:
@@ -85,13 +88,13 @@ def postprocess(df: pd.DataFrame) -> pd.DataFrame:
         else:
             if counter == 0:
                 counter += 1
-            elif counter <= STEP_SIZE and index < len(df) - 1:
+            elif counter <= step_size and index < len(df) - 1:
                 counter += 1
             else:
                 counter = 0
                 if set_start != 0:
                     shot_count = df['pred'][set_start:set_end + 1].sum()
-                    if shot_count >= SHOTS_WANTED or index == (len(df)-1):
+                    if shot_count >= shots_wanted or index == (len(df)-1):
                         clip_list[set_start] = set_end
                     set_start = 0
                     set_end = 0
@@ -102,16 +105,19 @@ def postprocess(df: pd.DataFrame) -> pd.DataFrame:
     out_data = pd.DataFrame()
     out_data['In'] = list(clip_list.keys())
     out_data['Out'] = list(clip_list.values())
+    out_data['Out'] = out_data['Out'].astype(int)
+    out_data['In'] = out_data['In'].astype(int)
 
     out_data['In']=out_data['In'].map(lambda x: str(datetime.timedelta(seconds=x)))
     out_data['Out']=out_data['Out'].map(lambda x: str(datetime.timedelta(seconds=x)))
-    out_data.set_index('In', inplace=True)
+    #out_data.set_index('In', inplace=True)
     #out_data.to_csv('file.csv', header=None)
 
     print(f"✅ Dataframe processed")
     return out_data
 
-    
+
+
 def pred(video: bytes = None) -> pd.DataFrame:
     print(Fore.MAGENTA + "\n ⭐️ Use case: pred" + Style.RESET_ALL)
 
@@ -149,7 +155,7 @@ def pred(video: bytes = None) -> pd.DataFrame:
                                  columns=["pred","sec"])
 
     new_data = postprocess(shoot_time_df)
-    
+
     return new_data
 
 
