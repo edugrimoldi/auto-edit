@@ -23,14 +23,14 @@ except Exception as e:
 
 # http://127.0.0.1:8000/predict?video=video_number.mp4
 @app.get("/predict")
-def predict(video):      
+def predict(file):      
     """
     Make a single course prediction.
     """
     if hasattr(app.state, 'model') and app.state.model is not None:
-        markers_df = pred(video)
-        markers_df = markers_df.to_json()
-        return {'markers': markers_df}
+        markers_df = pred(file)
+        #markers_df = markers_df.to_json()
+        return markers_df
     else:
         return {'error': 'Model not loaded.'}
 
