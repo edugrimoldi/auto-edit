@@ -15,5 +15,5 @@ SHOTS_WANTED = int(os.environ.get("SHOTS_WANTED"))
 STEP_SIZE = int(os.environ.get("STEP_SIZE"))
 
 ##################  CONSTANTS  #####################
-LOCAL_REGISTRY_PATH =  os.path.join(os.path.expanduser('~'), ".vae-project", "auto-edit", "training_outputs")
+LOCAL_REGISTRY_PATH =  os.path.join(os.path.expanduser('~'), "code", "edugrimoldi", "auto-edit")
 
