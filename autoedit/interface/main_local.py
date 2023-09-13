@@ -117,7 +117,6 @@ def postprocess(df: pd.DataFrame) -> pd.DataFrame:
     return out_data
 
 
-
 def pred(video: bytes = None) -> pd.DataFrame:
     print(Fore.MAGENTA + "\n ⭐️ Use case: pred" + Style.RESET_ALL)
 

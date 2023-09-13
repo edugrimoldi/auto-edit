@@ -1,6 +1,5 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 
 from moviepy.editor import VideoFileClip
 
@@ -21,12 +20,12 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# Load the model with error handling
+""" # Load the model with error handling
 try:
     app.state.model = load_model()
     print("✅ Model loaded successfully.")
 except Exception as e:
-    print(f"❌ Error loading the model: {str(e)}")
+    print(f"❌ Error loading the model: {str(e)}") """
 
 # http://127.0.0.1:8000/predict?video=video_number.mp4
 @app.post("/predict")
@@ -49,26 +48,6 @@ async def predict(file: UploadFile = File(...)):
 
     markers_df = markers_df.to_json()
     return markers_df
-
-# @app.get("/predict")
-# def predict(video):
-#     """
-#     Make a single course prediction.
-#     """
-#     markers_df = pred(video)
-
-#     markers_df = markers_df.to_json()
-
-#     return {'markers': markers_df}
-#     if hasattr(app.state, 'model') and app.state.model is not None:
-#         markers_df = pred(video)
-#         markers_df = markers_df.to_json()
-#         return {'markers': markers_df}
-#     else:
-#         return {'error': 'Model not loaded.'}
-
-
-
 
 @app.get("/")
 def root():
