@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware 
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse
 
 from moviepy.editor import VideoFileClip
 
@@ -21,12 +21,12 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# Load the model with error handling
+""" # Load the model with error handling
 try:
     app.state.model = load_model()
     print("✅ Model loaded successfully.")
 except Exception as e:
-    print(f"❌ Error loading the model: {str(e)}")
+    print(f"❌ Error loading the model: {str(e)}") """
 
 # http://127.0.0.1:8000/predict?video=video_number.mp4
 @app.post("/predict")
@@ -47,12 +47,20 @@ async def predict(file: UploadFile = File(...)):
     
     markers_df = pred('temp-audio.wav')
     
-    return StreamingResponse
-
+    def dataframe_to_csv(data):
+        csv = data.to_csv(header=False)
+        return csv
     
-    """
-        #markers_df = markers_df.to_json()
-"""
+    csv = dataframe_to_csv(markers_df)
+    breakpoint()
+    
+    locals_csv = "csv_bonito.csv"
+    
+    with open(locals_csv, 'w') as file: 
+        shutil.copyfileobj(csv.file, file)
+        
+    with open(locals_csv, 'r') as file: 
+        return FileResponse(file)
 
 @app.get("/")
 def root():
