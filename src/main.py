@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile
-from fastapi.middleware.cors import CORSMiddleware 
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from moviepy.editor import VideoFileClip
@@ -38,21 +38,37 @@ async def predict(file: UploadFile = File(...)):
 
     with open(locals_filename, 'wb') as f:
         shutil.copyfileobj(file.file, f)
-        
+
     clip = VideoFileClip(locals_filename)
-    
+
     #subclip mean video duration its from the place to start to the end
     audio = clip.audio
     audio.write_audiofile('temp-audio.wav')
-    
-    markers_df = pred('temp-audio.wav')
-    
-    return StreamingResponse
 
-    
-    """
-        #markers_df = markers_df.to_json()
-"""
+    markers_df = pred('temp-audio.wav')
+
+    markers_df = markers_df.to_json()
+    return markers_df
+
+# @app.get("/predict")
+# def predict(video):
+#     """
+#     Make a single course prediction.
+#     """
+#     markers_df = pred(video)
+
+#     markers_df = markers_df.to_json()
+
+#     return {'markers': markers_df}
+#     if hasattr(app.state, 'model') and app.state.model is not None:
+#         markers_df = pred(video)
+#         markers_df = markers_df.to_json()
+#         return {'markers': markers_df}
+#     else:
+#         return {'error': 'Model not loaded.'}
+
+
+
 
 @app.get("/")
 def root():
