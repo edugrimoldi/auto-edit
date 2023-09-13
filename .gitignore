@@ -11,3 +11,8 @@ __pycache__/
 autoedit.egg-info/
 build/
 models/
+
+video_bonito.mp4
+*.mp4
+temp-audio.wav
+*.wav
